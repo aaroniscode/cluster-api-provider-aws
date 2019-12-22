@@ -50,6 +50,20 @@ func (m *MockEC2MachineInterface) EXPECT() *MockEC2MachineInterfaceMockRecorder 
 	return m.recorder
 }
 
+// ClearInstanceUserData mocks base method
+func (m *MockEC2MachineInterface) ClearInstanceUserData(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClearInstanceUserData", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClearInstanceUserData indicates an expected call of ClearInstanceUserData
+func (mr *MockEC2MachineInterfaceMockRecorder) ClearInstanceUserData(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearInstanceUserData", reflect.TypeOf((*MockEC2MachineInterface)(nil).ClearInstanceUserData), arg0)
+}
+
 // CreateInstance mocks base method
 func (m *MockEC2MachineInterface) CreateInstance(arg0 *scope.MachineScope) (*v1alpha3.Instance, error) {
 	m.ctrl.T.Helper()

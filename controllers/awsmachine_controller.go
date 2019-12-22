@@ -351,6 +351,15 @@ func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope
 	// TODO(vincepri): Remove this annotation when clusterctl is no longer relevant.
 	machineScope.SetAnnotation("cluster-api-provider-aws", "true")
 
+	if machineScope.Machine.Status.NodeRef != nil {
+		machineScope.Info("nodeRef is set, clearing userData")
+		err := ec2svc.ClearInstanceUserData(instance.ID)
+
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
 	existingSecurityGroups, err := ec2svc.GetInstanceSecurityGroups(*machineScope.GetInstanceID())
 	if err != nil {
 		return reconcile.Result{}, err

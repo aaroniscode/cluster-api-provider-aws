@@ -36,4 +36,5 @@ type EC2MachineInterface interface {
 
 	TerminateInstanceAndWait(instanceID string) error
 	DetachSecurityGroupsFromNetworkInterface(groups []string, interfaceID string) error
+	ClearInstanceUserData(instanceID string) error
 }

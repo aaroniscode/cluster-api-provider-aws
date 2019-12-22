@@ -437,6 +437,19 @@ func (s *Service) GetInstanceSecurityGroups(instanceID string) (map[string][]str
 	return out, nil
 }
 
+// ClearInstanceUserData removes the User Data from an EC2 instance
+func (s *Service) ClearInstanceUserData(instanceID string) error {
+	input := &ec2.ModifyInstanceAttributeInput{
+		InstanceId: aws.String(instanceID),
+		UserData:   &ec2.BlobAttributeValue{},
+		Value:      aws.String(""),
+	}
+
+	_, err := s.scope.EC2.ModifyInstanceAttribute(input)
+
+	return err
+}
+
 // UpdateInstanceSecurityGroups modifies the security groups of the given
 // EC2 instance.
 func (s *Service) UpdateInstanceSecurityGroups(instanceID string, ids []string) error {
