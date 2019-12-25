@@ -35,6 +35,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -206,6 +207,9 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AWSClusterList")
 			os.Exit(1)
 		}
+		mgr.GetWebhookServer().Register("/validate-infrastructure-cluster-x-k8s-io-v1alpha3-machine",
+			&webhook.Admission{Handler: &controllers.MachineValidator{}},
+		)
 	}
 	// +kubebuilder:scaffold:builder
 
