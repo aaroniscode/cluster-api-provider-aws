@@ -195,10 +195,6 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AWSCluster")
 			os.Exit(1)
 		}
-		if err = (&infrav1alpha3.AWSMachine{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "AWSMachine")
-			os.Exit(1)
-		}
 		if err = (&infrav1alpha3.AWSMachineList{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "AWSMachineList")
 			os.Exit(1)
@@ -208,7 +204,10 @@ func main() {
 			os.Exit(1)
 		}
 		mgr.GetWebhookServer().Register("/validate-infrastructure-cluster-x-k8s-io-v1alpha3-machine",
-			&webhook.Admission{Handler: &controllers.MachineValidator{}},
+			&webhook.Admission{Handler: &controllers.MachineWebhook{}},
+		)
+		mgr.GetWebhookServer().Register("/validate-infrastructure-cluster-x-k8s-io-v1alpha3-awsmachine",
+			&webhook.Admission{Handler: &controllers.AWSMachineWebhook{}},
 		)
 	}
 	// +kubebuilder:scaffold:builder

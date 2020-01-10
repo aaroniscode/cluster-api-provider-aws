@@ -17,32 +17,51 @@ limitations under the License.
 package v1alpha3
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	ctrl "sigs.k8s.io/controller-runtime"
+    clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+//	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 // log is for logging in this package.
-var _ = logf.Log.WithName("awsmachine-resource")
+var foo = logf.Log.WithName("awsmachine-resource")
 
-func (r *AWSMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		Complete()
-}
-
-// +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1alpha3-awsmachine,mutating=false,failurePolicy=fail,groups=infrastructure.cluster.x-k8s.io,resources=awsmachines,versions=v1alpha3,name=validation.awsmachine.infrastructure.cluster.x-k8s.io
-
-var _ webhook.Validator = &AWSMachine{}
+// TODO, change all doc comments for funtions
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *AWSMachine) ValidateCreate() error {
+func (r *AWSMachine) ValidateCreate(ctx context.Context, c client.Client) error {
+	// Fetch the Machine.
+	//machine, err := util.GetOwnerMachine(ctx, c, r.ObjectMeta)
+    m := &clusterv1.Machine{}
+    key := client.ObjectKey{Name: name, Namespace: namespace}
+    if err := c.Get(ctx, key, m); err != nil {
+        return nil, err
+    }
+
+
+	if err != nil {
+		// todo change error below??
+		return apierrors.NewInvalid(GroupVersion.WithKind("AWSMachine").GroupKind(), r.Name, field.ErrorList{
+			field.InternalError(nil, errors.Wrap(err, "failed to convert new AWSMachine to unstructured object")),
+		})
+	}
+
+	foo.Info("Machine is %v", machine)
+
+	if machine.Spec.Version == nil && r.Spec.AMI.ID == nil {
+		return apierrors.NewInvalid(GroupVersion.WithKind("AWSMachine").GroupKind(), r.Name, field.ErrorList{
+			field.Required(field.NewPath("spec", "ami", "id"),
+				"AWSMachine's spec.ami.id is required if Machines's spec.version is not set",
+			),
+		})
+	}
 	return nil
 }
 
