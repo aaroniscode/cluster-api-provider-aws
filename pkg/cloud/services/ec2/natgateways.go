@@ -161,7 +161,7 @@ func (s *Service) getNatGatewayTagParams(id string) infrav1.BuildParams {
 }
 
 func (s *Service) createNatGateway(subnetID string) (*ec2.NatGateway, error) {
-	ip, err := s.getOrAllocateAddress(infrav1.APIServerRoleTagValue)
+	ip, err := s.getOrAllocateAddress(infrav1.NATGatewayRoleTagValue, subnetID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create IP address for NAT gateway for subnet ID %q", subnetID)
 	}

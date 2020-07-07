@@ -113,6 +113,9 @@ const (
 	// CommonRoleTagValue describes the value for the common role
 	CommonRoleTagValue = "common"
 
+	// NATGatewayRoleTagValue describes the value for the nat gateway role
+	NATGatewayRoleTagValue = "nat"
+
 	// PublicRoleTagValue describes the value for the public role
 	PublicRoleTagValue = "public"
 

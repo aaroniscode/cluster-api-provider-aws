@@ -30,7 +30,9 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/record"
 )
 
-func (s *Service) getOrAllocateAddress(role string) (string, error) {
+const SubnetTag = "SubnetID"
+
+func (s *Service) getOrAllocateAddress(role, subnetID string) (string, error) {
 	out, err := s.describeAddresses(role)
 	if err != nil {
 		record.Eventf(s.scope.AWSCluster, "FailedDescribeAddresses", "Failed to query addresses for role %q: %v", role, err)
@@ -40,14 +42,18 @@ func (s *Service) getOrAllocateAddress(role string) (string, error) {
 	// TODO: better handle multiple addresses returned
 	for _, address := range out.Addresses {
 		if address.AssociationId == nil {
-			return aws.StringValue(address.AllocationId), nil
+			for _, tag := range address.Tags {
+				if *tag.Key == SubnetTag && *tag.Value == subnetID {
+					return aws.StringValue(address.AllocationId), nil
+				}
+			}
 		}
 	}
 
-	return s.allocateAddress(role)
+	return s.allocateAddress(role, subnetID)
 }
 
-func (s *Service) allocateAddress(role string) (string, error) {
+func (s *Service) allocateAddress(role, subnetID string) (string, error) {
 	out, err := s.scope.EC2.AllocateAddress(&ec2.AllocateAddressInput{
 		Domain: aws.String("vpc"),
 	})
@@ -57,6 +63,9 @@ func (s *Service) allocateAddress(role string) (string, error) {
 		return "", errors.Wrap(err, "failed to allocate Elastic IP")
 	}
 
+	additionalTags := s.scope.AdditionalTags()
+	additionalTags[SubnetTag] = subnetID
+
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
 		if err := tags.Apply(&tags.ApplyParams{
 			EC2Client: s.scope.EC2,
@@ -64,9 +73,9 @@ func (s *Service) allocateAddress(role string) (string, error) {
 				ClusterName: s.scope.Name(),
 				ResourceID:  *out.AllocationId,
 				Lifecycle:   infrav1.ResourceLifecycleOwned,
-				Name:        aws.String(fmt.Sprintf("%s-eip-%s", s.scope.Name(), role)),
+				Name:        aws.String(fmt.Sprintf("%s-eip-%s-%s", s.scope.Name(), role, subnetID)),
 				Role:        aws.String(role),
-				Additional:  s.scope.AdditionalTags(),
+				Additional:  additionalTags,
 			},
 		}); err != nil {
 			return false, err
